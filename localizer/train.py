@@ -15,11 +15,11 @@ def get_data_generators(Xtr, Ytr, Xte, Yte, batchsize=128):
     data_gen_train = lambda bs, sl: data.data_generator(Xtr, Ytr, sl, bs)
     data_gen_test = lambda bs, sl: data.data_generator(Xte, Yte, sl, bs)
 
-    train_gen = data.imgaug_generator(lambda: data_gen_train(batchsize, train_slice), 
+    train_gen = data.imgaug_generator(lambda: data_gen_train(batchsize, train_slice),
                                 seq, hooks_label, zoom_factor=1)
     val_gen = data.no_imgaug_generator(lambda: data_gen_test(batchsize, val_slice), zoom_factor=1)
 
-    steps_per_epoch = Xtr.shape[0] // batchsize 
+    steps_per_epoch = Xtr.shape[0] // batchsize
     validation_steps = Xte.shape[0] // batchsize
 
     return train_gen, val_gen, steps_per_epoch, validation_steps
@@ -38,10 +38,10 @@ def plot_samples_grid(gen, num_plot=4):
         axes[r, c].set_axis_off()
 
 
-def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128):
+def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128, initial_channels=32):
     optimizer = util.AdamWithWeightnorm(amsgrad=True)
 
-    train_model = model.get_train_model(initial_channels=32)
+    train_model = model.get_train_model(initial_channels=initial_channels)
     train_model.compile(optimizer, loss='binary_crossentropy', metrics=['mae'])
 
     reduce_lr = ReduceLROnPlateau(
@@ -52,8 +52,8 @@ def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         train_model.fit_generator(train_gen, epochs=1000,
-                                  steps_per_epoch=steps_per_epoch, 
-                                  validation_data=val_gen, 
+                                  steps_per_epoch=steps_per_epoch,
+                                  validation_data=val_gen,
                                   validation_steps=validation_steps,
                                   callbacks=[reduce_lr, stopper, history])
 
