@@ -2,6 +2,7 @@ import warnings
 
 import matplotlib.pyplot as plt
 from keras.callbacks import EarlyStopping, History, ReduceLROnPlateau
+from keras.utils import multi_gpu_model
 
 from localizer import data, model, util
 
@@ -39,10 +40,14 @@ def plot_samples_grid(gen, num_plot=4):
         axes[r, c].set_axis_off()
 
 
-def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128, initial_channels=32):
+def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128, initial_channels=32, multi_gpu=False):
     optimizer = util.AdamWithWeightnorm(amsgrad=True)
 
     train_model = model.get_train_model(initial_channels=initial_channels)
+
+    if multi_gpu:
+        train_model = multi_gpu_model(train_model)
+
     train_model.compile(optimizer, loss='binary_crossentropy', metrics=['mae'])
 
     reduce_lr = ReduceLROnPlateau(
