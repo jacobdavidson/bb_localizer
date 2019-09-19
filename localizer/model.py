@@ -1,8 +1,8 @@
 from keras.layers import Input
-from keras.layers.convolutional import Conv2D
+from keras.models import Model
 from keras.layers.core import Dropout, Flatten, SpatialDropout2D
 from keras.layers.normalization import BatchNormalization
-from keras.models import Model
+from keras.layers.convolutional import Conv2D
 
 
 def get_conv_model(initial_channels=32):
@@ -29,15 +29,15 @@ def get_conv_model(initial_channels=32):
     x = BatchNormalization()(x)
     x = Conv2D(initial_channels * 2**3, (3, 3), strides=(1, 1), activation='relu')(x)
     x = Dropout(.5)(x)
-    x = Conv2D(4, (1, 1), activation='sigmoid')(x)    
+    x = Conv2D(4, (1, 1), activation='sigmoid')(x)
 
     model = Model(inputs=inputs, outputs=x)
 
     return model
 
 
-def get_train_model(initial_channels=32):
-    conv_model = get_conv_model(initial_channels)
+def get_train_model(initial_channels=32, model_factory=get_conv_model):
+    conv_model = model_factory(initial_channels)
 
     inputs = Input(shape=(128, 128, 1))
     x = conv_model(inputs)
