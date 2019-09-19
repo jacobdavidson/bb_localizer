@@ -12,11 +12,12 @@ def get_data_generators(Xtr, Ytr, Xte, Yte, batchsize=128):
 
     seq, hooks_label = data.get_trivial_augmenter()
 
-    data_gen_train = lambda bs, sl: data.data_generator(Xtr, Ytr, sl, bs)
-    data_gen_test = lambda bs, sl: data.data_generator(Xte, Yte, sl, bs)
+    def data_gen_train(bs, sl): return data.data_generator(Xtr, Ytr, sl, bs)
+
+    def data_gen_test(bs, sl): return data.data_generator(Xte, Yte, sl, bs)
 
     train_gen = data.imgaug_generator(lambda: data_gen_train(batchsize, train_slice),
-                                seq, hooks_label, zoom_factor=1)
+                                      seq, hooks_label, zoom_factor=1)
     val_gen = data.no_imgaug_generator(lambda: data_gen_test(batchsize, val_slice), zoom_factor=1)
 
     steps_per_epoch = Xtr.shape[0] // batchsize

@@ -57,7 +57,7 @@ def get_augmenter():
             sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.05), order=3)),
             sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.1)))
         ],
-                   random_order=True)
+            random_order=True)
     ])
 
     def activator_label(images, augmenter, parents, default):
@@ -136,7 +136,7 @@ def no_imgaug_generator(gen_, zoom_factor=.32):
 
 def load_labelbox_image(row):
     response = urllib.request.urlopen(row['Labeled Data'])
-    image_data = response.read() 
+    image_data = response.read()
     image = skimage.io.imread(image_data, as_gray=True, plugin='imageio')
     return image
 
@@ -147,7 +147,7 @@ def process_labelbox_files(df, X, Y, samples_per_file=20000, patch_size=128, pad
     np.random.shuffle(indices)
 
     pdf = util.get_normal_pdf(padding)
-    
+
     for _, row in tqdm.tqdm_notebook(df.iterrows()):
         image = load_labelbox_image(row)
         image_padded = np.pad(image, padding, mode='edge')
@@ -168,18 +168,20 @@ def process_labelbox_files(df, X, Y, samples_per_file=20000, patch_size=128, pad
             label_image /= max_saliency
 
         sample_indices = np.random.choice(
-            label_image.shape[1] * label_image.shape[2], 
-            size=samples_per_file, 
-            replace=False,                         
+            label_image.shape[1] * label_image.shape[2],
+            size=samples_per_file,
+            replace=False,
             p=label_image.sum(axis=0).flatten() / label_image.sum()
         )
 
-        sample_coords = np.stack(np.unravel_index(sample_indices, (label_image.shape[1], label_image.shape[2])), axis=-1)
+        sample_coords = np.stack(np.unravel_index(
+            sample_indices, (label_image.shape[1], label_image.shape[2])), axis=-1)
 
-        samples = [image_padded[x-patch_size//2:x+patch_size//2, y-patch_size//2:y+patch_size//2] for x, y in sample_coords]
-        sample_labels = [label_image[:, x-patch_size//2:x+patch_size//2, y-patch_size//2:y+patch_size//2] for x, y in sample_coords]
+        samples = [image_padded[x-patch_size//2:x+patch_size//2, y-patch_size//2:y+patch_size//2]
+                   for x, y in sample_coords]
+        sample_labels = [label_image[:, x-patch_size//2:x+patch_size//2,
+                                     y-patch_size//2:y+patch_size//2] for x, y in sample_coords]
 
-        total_num_of_idxs = len(indices)
         for x, y in tqdm.tqdm_notebook(zip(samples, sample_labels), total=samples_per_file):
             X[indices[idx], :, :] = (x * 255).astype(np.uint8)
             Y[indices[idx], :, :, :] = (np.transpose(y[:-1], (1, 2, 0)) * 255).astype(np.uint8)
@@ -192,13 +194,15 @@ def create_data_hdf5(output_path, samples_per_file, train_indices, test_indices,
 
     g1 = hf.create_group('train')
     g1.create_dataset('X', shape=(samples_per_file * len(train_indices), patch_size, patch_size), dtype=np.uint8)
-    g1.create_dataset('Y', shape=(samples_per_file * len(train_indices), patch_size, patch_size, len(const.labels)), dtype=np.uint8)
+    g1.create_dataset('Y', shape=(samples_per_file * len(train_indices),
+                                  patch_size, patch_size, len(const.labels)), dtype=np.uint8)
     Xtr = g1.get('X')
     Ytr = g1.get('Y')
 
     g2 = hf.create_group('test')
     g2.create_dataset('X', shape=(samples_per_file * len(test_indices), patch_size, patch_size), dtype=np.uint8)
-    g2.create_dataset('Y', shape=(samples_per_file * len(test_indices), patch_size, patch_size, len(const.labels)), dtype=np.uint8)
+    g2.create_dataset('Y', shape=(samples_per_file * len(test_indices),
+                                  patch_size, patch_size, len(const.labels)), dtype=np.uint8)
     Xte = g2.get('X')
     Yte = g2.get('Y')
 

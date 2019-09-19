@@ -42,14 +42,14 @@ def calculate_metrics(num_true_positive, num_condition_positive, num_predicted_p
     precision = num_true_positive / (num_predicted_positive + 1e-8)
     fone = fbeta_score(recall, precision, beta=1)
     ftwo = fbeta_score(recall, precision, beta=2)
-    
-    return recall, precision, fone, ftwo    
+
+    return recall, precision, fone, ftwo
 
 
 def get_predictions(image, conv_model, padding=128):
     image_padded = np.pad(image, padding, mode='edge')
     predictions = conv_model.predict(image_padded[None, :, :, None])[0]
-    
+
     return predictions
 
 
@@ -70,7 +70,7 @@ def get_predicted_positions(saliency, thresholds, min_distance=1, padding=128):
 
 def get_recall_precision(eval_metrics_by_image, labels, thresholds):
     plt.figure(figsize=(12, 6))
-    
+
     recalls_per_class, precision_by_class = [], []
     for class_idx, class_name in enumerate(labels):
         recalls, precisions = [], []
@@ -95,7 +95,7 @@ def get_recall_precision(eval_metrics_by_image, labels, thresholds):
     plt.xlim([.5, 1.01])
     plt.ylim([.5, 1.01])
     plt.grid()
-    
+
     return recalls_per_class, precision_by_class
 
 
@@ -122,7 +122,7 @@ def get_threshold_fone(eval_metrics_by_image, labels, thresholds):
     plt.xlabel('Threshold')
     plt.ylabel('F1')
     plt.grid()
-    
+
     return fones_by_class
 
 
@@ -149,36 +149,37 @@ def get_threshold_ftwo(eval_metrics_by_image, labels, thresholds):
     plt.xlabel('Threshold')
     plt.ylabel('F2')
     plt.grid()
-    
+
     return ftwos_by_class
 
 
 def get_best_thresholds(fones_by_class, ftwos_by_class, thresholds):
     fone_classes = ('UnmarkedBee', 'BeeInCell', 'UpsideDownBee')
     ftwo_classes = ('MarkedBee', )
-    
+
     best_thresholds = \
-        [(label, thresholds[np.argmax(fones_by_class[class_idx])]) for 
+        [(label, thresholds[np.argmax(fones_by_class[class_idx])]) for
          class_idx, label in enumerate(labels) if label in fone_classes] + \
-        [(label, thresholds[np.argmax(ftwos_by_class[class_idx])]) for 
+        [(label, thresholds[np.argmax(ftwos_by_class[class_idx])]) for
          class_idx, label in enumerate(labels) if label in ftwo_classes]
-    
+
     return best_thresholds
 
 
-def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, padding=128, max_assignment_distance=64, thresholds=None):
+def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, padding=128,
+                        max_assignment_distance=64, thresholds=None):
     if thresholds is None:
         thresholds = np.linspace(0.01, 0.99, 100)
-        
+
     eval_metrics_by_image = []
     for _, eval_row in tqdm.tqdm_notebook(eval_df.iterrows()):
         image = data.load_labelbox_image(eval_row)
         predictions = get_predictions(image, padding=padding)
-        
+
         predictions_positions_by_threshold = []
         for saliency_threshold in thresholds:
             predicted_positions = get_predicted_positions(
-                predictions.copy(), 
+                predictions.copy(),
                 [saliency_threshold for _ in range(len(labels))],
                 min_distance=min_distance,
                 padding=padding
@@ -190,26 +191,28 @@ def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, paddi
             eval_metrics_by_threshold = []
             for threshold_idx, threshold in enumerate(thresholds):
                 truth_positions = eval_row['Label'][labels[class_idx]]
-                truth_positions = np.stack([np.array((l['geometry']['y'], l['geometry']['x'])) for l in truth_positions])
+                truth_positions = np.stack([np.array((l['geometry']['y'], l['geometry']['x']))
+                                            for l in truth_positions])
                 predictions_positions = predictions_positions_by_threshold[threshold_idx]
-                assignments = match_positions(truth_positions, predictions_positions[class_idx], max_distance=max_assignment_distance)
+                assignments = match_positions(
+                    truth_positions, predictions_positions[class_idx], max_distance=max_assignment_distance)
 
                 eval_metrics_by_threshold.append(
                     (len(assignments), len(truth_positions), len(predictions_positions[class_idx]))
                 )
 
-            eval_metrics_by_class.append(eval_metrics_by_threshold)    
+            eval_metrics_by_class.append(eval_metrics_by_threshold)
         eval_metrics_by_image.append(eval_metrics_by_class)
-        
+
     recalls_by_class, precisions_by_class = get_recall_precision(eval_metrics_by_image, labels, thresholds)
     plt.show()
     fones_by_class = get_threshold_fone(eval_metrics_by_image, labels, thresholds)
     plt.show()
     ftwos_by_class = get_threshold_ftwo(eval_metrics_by_image, labels, thresholds)
     plt.show()
-    
+
     best_thresholds = get_best_thresholds(fones_by_class, ftwos_by_class, thresholds)
-    
+
     for class_idx, label in enumerate(labels):
         threshold = [t for n, t in best_thresholds if n == label][0]
         threshold_idx = np.argwhere(thresholds == threshold)[0][0]
@@ -228,10 +231,11 @@ def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, paddi
 def calculate_iaa(df, max_distance=64):
     print(' ' * 20 + ('\t' * 2).join(('Recall', 'Precision', 'F1')))
     print()
-    
+
     for class_idx, label in enumerate(labels):
         annotator_positions = []
-        for idx, row in df[df['External ID'].apply(lambda s: s.startswith('Cam_0_2019-07-26T19:31:09.132765Z'))].iterrows():
+        df_filtered = df[df['External ID'].apply(lambda s: s.startswith('Cam_0_2019-07-26T19:31:09.132765Z'))]
+        for idx, row in df_filtered.iterrows():
             positions = row['Label'][labels[class_idx]]
             positions = np.stack([np.array((l['geometry']['y'], l['geometry']['x'])) for l in positions])
 

@@ -238,6 +238,6 @@ class AdamWithWeightnorm(Adam):
 
 def get_normal_pdf(padding=128, cov=256):
     return scipy.stats.multivariate_normal.pdf(
-                np.dstack(np.meshgrid(np.arange(-padding, padding), 
-                                      np.arange(-padding, padding))), 
-                mean=(0, 0), cov=(256, 256))
+        np.dstack(np.meshgrid(np.arange(-padding, padding),
+                              np.arange(-padding, padding))),
+        mean=(0, 0), cov=(256, 256))
