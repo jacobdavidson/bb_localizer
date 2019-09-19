@@ -65,4 +65,4 @@ def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps,
                                   validation_steps=validation_steps,
                                   callbacks=[reduce_lr, stopper, history])
 
-    return model
+    return train_model
