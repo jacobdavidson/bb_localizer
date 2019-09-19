@@ -40,8 +40,10 @@ def plot_samples_grid(gen, num_plot=4):
         axes[r, c].set_axis_off()
 
 
-def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128, initial_channels=32, multi_gpu=False):
-    optimizer = util.AdamWithWeightnorm(amsgrad=True)
+def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps, batchsize=128,
+                          initial_channels=32, multi_gpu=False, optimizer='Nadam'):
+    if optimizer == 'AdamWithWeightnorm':
+        optimizer = util.AdamWithWeightnorm(amsgrad=True)
 
     train_model = model.get_train_model(initial_channels=initial_channels)
 
