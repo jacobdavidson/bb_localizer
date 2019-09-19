@@ -203,3 +203,17 @@ def create_data_hdf5(output_path, samples_per_file, train_indices, test_indices,
     Yte = g2.get('Y')
 
     return hf, (Xtr, Ytr), (Xte, Yte)
+
+
+def load_data_hdf5(output_path):
+    hf = h5py.File(output_path, 'r')
+
+    g1 = hf['train']
+    Xtr = g1.get('X')
+    Ytr = g1.get('Y')
+
+    g2 = hf['test']
+    Xte = g2.get('X')
+    Yte = g2.get('Y')
+
+    return hf, (Xtr, Ytr), (Xte, Yte)
