@@ -53,15 +53,39 @@ def get_predictions(image, conv_model, padding=128):
     return predictions
 
 
-def get_predicted_positions(saliency, thresholds, min_distance=1, padding=128):
-    for class_idx, threshold in enumerate(thresholds):
-        below_thresh = saliency[:, :, class_idx] < threshold
-        saliency[:, :, class_idx][below_thresh] = 0.
+def get_subpixel_offsets(saliency, position, subpixel_range):
+    sample = saliency[position[0]-subpixel_range:position[0]+subpixel_range,
+                      position[1]-subpixel_range:position[1]+subpixel_range]
 
+    M = skimage.measure.moments(sample)
+    centroid = (M[1, 0] / M[0, 0], M[0, 1] / M[0, 0])
+
+    return (centroid[0] - (subpixel_range - 0.5), centroid[1] - (subpixel_range - 0.5))
+
+
+def get_predicted_positions(saliency, thresholds, min_distance=1, padding=128,
+                            subpixel_precision=True, subpixel_range=3):
     predictions_positions = []
     for class_idx in range(len(thresholds)):
-        positions = skimage.feature.peak_local_max(saliency[:, :, class_idx], min_distance=min_distance)
-        padded_positions = (((((positions + 1 + 1) * 2 + 1 + 1) * 2 + 1 + 1) * 2 + 1 + 1) * 2 + 2)
+        class_saliency = saliency[:, :, class_idx]
+
+        positions = skimage.feature.peak_local_max(
+            class_saliency,
+            min_distance=min_distance,
+            threshold_abs=thresholds[class_idx]
+        )
+
+        if subpixel_precision:
+            saliency_padded = np.pad(class_saliency, pad_width=subpixel_range, constant_values=0)
+            subpixel_offsets = [
+                get_subpixel_offsets(saliency_padded, p + subpixel_range, subpixel_range=subpixel_range) for p in positions]
+
+            positions = positions.astype(np.float32)
+            for idx in range(len(positions)):
+                positions[idx, 0] += subpixel_offsets[idx][0]
+                positions[idx, 1] += subpixel_offsets[idx][1]
+
+        padded_positions = ((((positions + 5) * 2 + 1) * 2 + 1) * 2 + 1)
 
         predictions_positions.append(padded_positions - padding)
 
