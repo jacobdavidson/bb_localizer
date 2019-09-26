@@ -48,7 +48,7 @@ def calculate_metrics(num_true_positive, num_condition_positive, num_predicted_p
 
 def get_predictions(image, conv_model, padding=128):
     image_padded = np.pad(image, padding, mode='edge')
-    predictions = conv_model.predict(image_padded[None, :, :, None])[0]
+    predictions = conv_model.predict_on_batch(image_padded[None, :, :, None])[0]
 
     return predictions
 
