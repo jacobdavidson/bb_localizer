@@ -1,8 +1,6 @@
-from keras.layers import Input, Lambda
-from keras.models import Model
-from keras.layers.core import Dropout, Flatten, SpatialDropout2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.convolutional import Conv2D
+from tensorflow.keras.layers import Input, Lambda
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dropout, Flatten, SpatialDropout2D, BatchNormalization, Conv2D
 
 
 def get_conv_model(initial_channels=32):
