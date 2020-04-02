@@ -1,8 +1,8 @@
 import warnings
 
 import matplotlib.pyplot as plt
-from keras.callbacks import EarlyStopping, History, ReduceLROnPlateau
-from keras.utils import multi_gpu_model
+from tensorflow.keras.callbacks import EarlyStopping, History, ReduceLROnPlateau
+from tensorflow.keras.utils import multi_gpu_model
 
 from localizer import data, model, util
 
