@@ -5,6 +5,7 @@ import h5py
 import imgaug
 import numpy as np
 import skimage
+import skimage.io
 import tqdm
 from imgaug import augmenters as iaa
 from multiprocess import Pool, Semaphore, cpu_count
@@ -138,6 +139,10 @@ def load_labelbox_image(row):
     response = urllib.request.urlopen(row['Labeled Data'])
     image_data = response.read()
     image = skimage.io.imread(image_data, as_gray=True, plugin='imageio')
+
+    if image.max() > 2:
+        image = image / 255
+
     return image
 
 
