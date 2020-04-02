@@ -237,6 +237,32 @@ def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, paddi
 
     best_thresholds = get_best_thresholds(fones_by_class, ftwos_by_class, thresholds)
 
+    distances = []
+    for _, eval_row in tqdm.tqdm_notebook(eval_df.iterrows()):
+        image = data.load_labelbox_image(eval_row)
+        predictions = get_predictions(image, padding=padding)
+
+        predicted_positions = get_predicted_positions(
+            predictions.copy(),
+            [dict(best_thresholds)[label] for label in labels],
+            min_distance=min_distance,
+            padding=padding
+        )
+
+        for class_idx, label in enumerate(labels):
+            truth_positions = eval_row['Label'][labels[class_idx]]
+            truth_positions = np.stack([np.array((l['geometry']['y'], l['geometry']['x']))
+                                        for l in truth_positions])
+
+            assignments = match_positions(
+                truth_positions, predicted_positions[class_idx], max_distance=max_assignment_distance
+            )
+
+            distance_matrix = scipy.spatial.distance_matrix(predicted_positions[class_idx], truth_positions)
+            distances.append(distance_matrix[assignments[:, 0], assignments[:, 1]])
+
+    distances = np.concatenate(distances)
+
     for class_idx, label in enumerate(labels):
         threshold = [t for n, t in best_thresholds if n == label][0]
         threshold_idx = np.argwhere(thresholds == threshold)[0][0]
@@ -250,6 +276,10 @@ def evalulate_localizer(eval_df, get_predictions, get_predicted_positions, paddi
             ftwos_by_class[class_idx][threshold_idx]
         ))
         print()
+
+    print('Mean assignment distance: {:.3f}'.format(distances.mean()))
+
+    return best_thresholds
 
 
 def calculate_iaa(df, max_distance=64):
