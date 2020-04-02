@@ -1,15 +1,8 @@
 import numpy as np
 import scipy
 import tensorflow as tf
-from keras import backend as K
-from keras.backend.tensorflow_backend import set_session
-from keras.optimizers import SGD, Adam
-
-
-def set_keras_session():
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    set_session(tf.Session(config=config))
+from tensorflow.keras import backend as K
+from tensorflow.keras.optimizers import SGD, Adam
 
 
 def get_weightnorm_params_and_grads(p, g):
