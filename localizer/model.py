@@ -1,6 +1,14 @@
-from tensorflow.keras.layers import Input, Lambda
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dropout, Flatten, SpatialDropout2D, BatchNormalization, Conv2D
+import tensorflow as tf
+
+# Use layers and models from tf.keras
+Input = tf.keras.layers.Input
+Lambda = tf.keras.layers.Lambda
+Model = tf.keras.models.Model
+Dropout = tf.keras.layers.Dropout
+Flatten = tf.keras.layers.Flatten
+SpatialDropout2D = tf.keras.layers.SpatialDropout2D
+BatchNormalization = tf.keras.layers.BatchNormalization
+Conv2D = tf.keras.layers.Conv2D
 
 
 def get_conv_model(initial_channels=32):

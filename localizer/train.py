@@ -1,8 +1,15 @@
 import warnings
 
 import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import EarlyStopping, History, ReduceLROnPlateau
-from tensorflow.keras.utils import multi_gpu_model
+import tensorflow as tf
+
+# Access Keras callbacks and utils from tf.keras
+EarlyStopping = tf.keras.callbacks.EarlyStopping
+History = tf.keras.callbacks.History
+ReduceLROnPlateau = tf.keras.callbacks.ReduceLROnPlateau
+
+# Set up MirroredStrategy for multi-GPU support
+strategy = tf.distribute.MirroredStrategy()
 
 from localizer import data, model, util
 
@@ -45,12 +52,10 @@ def train_localizer_model(train_gen, val_gen, steps_per_epoch, validation_steps,
     if optimizer == 'AdamWithWeightnorm':
         optimizer = util.AdamWithWeightnorm(amsgrad=True)
 
-    train_model = model.get_train_model(initial_channels=initial_channels)
-
-    if multi_gpu:
-        train_model = multi_gpu_model(train_model)
-
-    train_model.compile(optimizer, loss='binary_crossentropy', metrics=['mae'])
+    # Use the strategy scope around the model creation and compilation
+    with strategy.scope() if multi_gpu else nullcontext():
+        train_model = model.get_train_model(initial_channels=initial_channels)
+        train_model.compile(optimizer, loss='binary_crossentropy', metrics=['mae'])
 
     reduce_lr = ReduceLROnPlateau(
         monitor='val_loss', factor=0.25, patience=15, min_lr=0.00001, min_delta=0.0001, verbose=True)

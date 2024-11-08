@@ -1,8 +1,11 @@
 import numpy as np
 import scipy
 import tensorflow as tf
-from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import SGD, Adam
+
+# Access Keras backend and optimizers from tf.keras
+K = tf.keras.backend
+SGD = tf.keras.optimizers.SGD
+Adam = tf.keras.optimizers.Adam
 
 
 def get_weightnorm_params_and_grads(p, g):
